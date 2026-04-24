@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SpeakUp">
+<meta name="theme-color" content="#0d1f1a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>SpeakUp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1f1a;
+  --surface: #152820;
+  --surface2: #1e3830;
+  --border: #2a4a3e;
+  --green: #3dffa0;
+  --green-dim: #1a8c54;
+  --amber: #ffb347;
+  --red: #ff6b6b;
+  --text: #e8f5f0;
+  --muted: #6b9980;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%; height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Instrument Sans', sans-serif;
+  overflow: hidden;
+}
+
+/* ── SCREENS ── */
+.screen { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
+.screen.hidden { display: none; }
+
+/* ── SPLASH / SCENARIO ── */
+#screen-home {
+  background: var(--bg);
+  padding: 0;
+}
+
+.home-header {
+  padding: 60px 28px 20px;
+  background: linear-gradient(180deg, #0a1a15 0%, transparent 100%);
+}
+.wordmark {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 2.2rem;
+  letter-spacing: -0.04em;
+  color: var(--green);
+  line-height: 1;
+}
+.wordmark small {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.home-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 20px calc(24px + var(--safe-bottom));
+}
+.home-scroll::-webkit-scrollbar { display: none; }
+
+.section-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 20px 0 10px 4px;
+}
+
+.scenario-list { display: flex; flex-direction: column; gap: 10px; }
+
+.scenario-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.12s;
+  -webkit-user-select: none;
+}
+.scenario-item:active {
+  transform: scale(0.97);
+  background: var(--surface2);
+  border-color: var(--green-dim);
+}
+.scenario-item .ico {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.scenario-item .info { flex: 1; min-width: 0; }
+.scenario-item .name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.scenario-item .sub { font-size: 0.78rem; color: var(--muted); }
+.scenario-item .arrow { color: var(--muted); font-size: 0.9rem; }
+
+/* ── CHAT SCREEN ── */
+#screen-chat {
+  background: var(--bg);
+}
+
+.chat-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 54px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+.back-btn {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.chat-nav-info { flex: 1; min-width: 0; }
+.chat-nav-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-nav-sub { font-size: 0.73rem; color: var(--muted); }
+
+/* Messages */
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+#messages::-webkit-scrollbar { display: none; }
+
+.msg-row { display: flex; gap: 8px; align-items: flex-end; }
+.msg-row.user { flex-direction: row-reverse; }
+
+.av {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  background: var(--surface2);
+}
+
+.bubble {
+  max-width: 78%;
+  border-radius: 18px;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  position: relative;
+}
+.msg-row.ai .bubble {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+.msg-row.user .bubble {
+  background: var(--green-dim);
+  border: 1px solid #1f9c5e;
+  border-bottom-right-radius: 4px;
+  color: #d4ffe9;
+}
+
+/* Transcript label */
+.transcript-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.transcript-label .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  display: inline-block;
+}
+
+/* Feedback accordion */
+.fb-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 0.75rem;
+  color: var(--green);
+  cursor: pointer;
+  -webkit-user-select: none;
+  border: none;
+  background: none;
+  font-family: inherit;
+  padding: 0;
+}
+.fb-toggle .arrow-icon { transition: transform 0.2s; }
+.fb-toggle.open .arrow-icon { transform: rotate(90deg); }
+
+.fb-panel {
+  display: none;
+  margin-top: 10px;
+  background: rgba(61,255,160,0.06);
+  border: 1px solid rgba(61,255,160,0.2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.8rem;
+}
+.fb-panel.open { display: block; }
+
+.fb-score {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.fb-score .stars { color: var(--amber); font-size: 0.9rem; letter-spacing: 1px; }
+.fb-score .label { font-size: 0.75rem; color: var(--muted); }
+
+.fb-section { margin-bottom: 8px; }
+.fb-section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.fb-good { color: #3dffa0; }
+.fb-improve { color: #ffb347; }
+.fb-alt {
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-style: italic;
+}
+.fb-loading { color: var(--muted); font-style: italic; }
+
+/* Typing */
+.typing-dots {
+  display: flex; gap: 4px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  border-bottom-left-radius: 4px;
+  width: fit-content;
+}
+.typing-dots span {
+  width: 6px; height: 6px;
+  background: var(--muted);
+  border-radius: 50%;
+  animation: td 1.2s infinite;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes td { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+
+/* ── INPUT BAR ── */
+#input-bar {
+  flex-shrink: 0;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 12px 16px calc(12px + var(--safe-bottom));
+}
+
+.input-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+#user-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 11px 14px;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.92rem;
+  color: var(--text);
+  resize: none;
+  outline: none;
+  min-height: 44px;
+  max-height: 120px;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+#user-input:focus { border-color: var(--green-dim); }
+#user-input::placeholder { color: var(--muted); }
+
+.icon-btn {
+  width: 44px; height: 44px;
+  border-radius: 13px;
+  border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.12s, background 0.2s;
+}
+.icon-btn:active { transform: scale(0.92); }
+
+#mic-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+#mic-btn.recording {
+  background: var(--red);
+  border-color: var(--red);
+  animation: pulse 1s infinite;
+}
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,107,107,0.4)} 50%{box-shadow:0 0 0 8px rgba(255,107,107,0)} }
+
+#send-btn {
+  background: var(--green-dim);
+  border: 1px solid #1f9c5e;
+  color: #fff;
+}
+#send-btn:disabled { background: var(--surface2); border-color: var(--border); color: var(--muted); }
+
+/* Recording overlay */
+#rec-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+#rec-overlay.active { display: flex; }
+
+.rec-ring {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: var(--red);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.5rem;
+  box-shadow: 0 0 0 0 rgba(255,107,107,0.5);
+  animation: ring-pulse 1s ease-out infinite;
+}
+@keyframes ring-pulse { 0%{box-shadow:0 0 0 0 rgba(255,107,107,0.5)} 100%{box-shadow:0 0 0 32px rgba(255,107,107,0)} }
+
+.rec-label {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
+}
+.rec-sub { font-size: 0.85rem; color: rgba(255,255,255,0.6); }
+
+.rec-stop {
+  margin-top: 10px;
+  padding: 14px 40px;
+  border-radius: 50px;
+  background: #fff;
+  color: #000;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+}
+
+/* Waveform animation */
+.waveform { display: flex; align-items: center; gap: 3px; height: 32px; }
+.wave-bar {
+  width: 3px;
+  background: var(--red);
+  border-radius: 2px;
+  animation: wave 1s ease-in-out infinite;
+}
+.wave-bar:nth-child(1){height:40%;animation-delay:0s}
+.wave-bar:nth-child(2){height:70%;animation-delay:0.1s}
+.wave-bar:nth-child(3){height:100%;animation-delay:0.2s}
+.wave-bar:nth-child(4){height:60%;animation-delay:0.3s}
+.wave-bar:nth-child(5){height:80%;animation-delay:0.1s}
+.wave-bar:nth-child(6){height:45%;animation-delay:0.2s}
+.wave-bar:nth-child(7){height:90%;animation-delay:0.05s}
+@keyframes wave { 0%,100%{transform:scaleY(0.4)} 50%{transform:scaleY(1)} }
+
+/* ── MISC ── */
+.processing-msg {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 8px;
+  font-style: italic;
+}
+</style>
+</head>
+<body>
+
+<!-- HOME SCREEN -->
+<div class="screen" id="screen-home">
+  <div class="home-header">
+    <div class="wordmark">SpeakUp<small>AI English Coach</small></div>
+  </div>
+  <div class="home-scroll">
+    <div class="section-label">シナリオを選択</div>
+    <div class="scenario-list" id="scenario-list"></div>
+  </div>
+</div>
+
+<!-- CHAT SCREEN -->
+<div class="screen hidden" id="screen-chat">
+  <div class="chat-nav">
+    <div class="back-btn" id="back-btn">←</div>
+    <div class="chat-nav-info">
+      <div class="chat-nav-title" id="chat-nav-title">-</div>
+      <div class="chat-nav-sub">AI英会話コーチ　·　中級ビジネス</div>
+    </div>
+  </div>
+  <div id="messages"></div>
+  <div id="input-bar">
+    <div class="input-row">
+      <textarea id="user-input" rows="1" placeholder="英語で入力 または マイクで話す…"></textarea>
+      <button class="icon-btn" id="mic-btn" title="録音">🎤</button>
+      <button class="icon-btn" id="send-btn" title="送信" disabled>➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECORDING OVERLAY -->
+<div id="rec-overlay">
+  <div class="waveform">
+    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+  </div>
+  <div class="rec-ring">🎤</div>
+  <div class="rec-label">録音中…</div>
+  <div class="rec-sub">話し終わったら停止を押してください</div>
+  <button class="rec-stop" id="rec-stop-btn">⏹ 停止して送信</button>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────
+const SCENARIOS = [
+  { id:"smalltalk",    icon:"☕", name:"Small Talk",         sub:"オフィス雑談・アイスブレイク",  prompt:"You are a friendly American colleague. Have casual small talk about weekends, work-life balance, or current events. Keep it natural at an intermediate level." },
+  { id:"meeting",      icon:"📊", name:"Business Meeting",   sub:"会議での発言・意見表明",         prompt:"You are a business professional in a team meeting. Discuss project updates, strategy, or deadlines. Encourage the user to speak up and express opinions professionally." },
+  { id:"negotiation",  icon:"🤝", name:"Negotiation",        sub:"交渉・条件確認・価格交渉",       prompt:"You are a vendor in a business negotiation. The user is a buyer. Negotiate pricing and terms. Push back reasonably to make the user practice persuasive English." },
+  { id:"interview",    icon:"💼", name:"Job Interview",      sub:"英語面接の練習",                 prompt:"You are an interviewer at an international company. Ask professional interview questions. Give brief encouragement and coaching tips after each answer." },
+  { id:"presentation", icon:"🎤", name:"Presentation",       sub:"プレゼン練習・Q&A対応",          prompt:"You are an attentive audience member at a business presentation. The user is presenting. Ask probing questions and give constructive feedback on clarity and natural English." },
+  { id:"travel",       icon:"✈️", name:"Business Travel",    sub:"出張・ホテル・ネットワーキング",  prompt:"Roleplay business travel: airport, hotel, restaurant, or conference networking. Keep it practical and intermediate." },
+  { id:"freeform",     icon:"💬", name:"フリートーク",        sub:"自由会話・何でもOK",             prompt:"You are a warm and engaging English conversation partner. Chat freely on any topic. Encourage naturally, gently note big mistakes, keep the conversation flowing." },
+];
+
+let currentScenario = null;
+let history = [];
+let isWaiting = false;
+let mediaRecorder = null;
+let audioChunks = [];
+
+// ── BUILD HOME ────────────────────────────────────────────
+const list = document.getElementById('scenario-list');
+SCENARIOS.forEach(s => {
+  const el = document.createElement('div');
+  el.className = 'scenario-item';
+  el.innerHTML = `<div class="ico">${s.icon}</div><div class="info"><div class="name">${s.name}</div><div class="sub">${s.sub}</div></div><div class="arrow">›</div>`;
+  el.onclick = () => startScenario(s);
+  list.appendChild(el);
+});
+
+// ── NAVIGATION ────────────────────────────────────────────
+function startScenario(s) {
+  currentScenario = s;
+  history = [];
+  document.getElementById('chat-nav-title').textContent = s.icon + ' ' + s.name;
+  document.getElementById('messages').innerHTML = '';
+  document.getElementById('user-input').value = '';
+  updateSendBtn();
+  showScreen('chat');
+  addAIMessage(`<strong>${s.name}</strong> へようこそ！<br><br>I'm your AI English coach today. Speak or type in English — I'll reply naturally and give you pronunciation & grammar feedback on every message. Let's get started! 😊<br><br><em>How are you doing today?</em>`);
+}
+
+document.getElementById('back-btn').onclick = () => showScreen('home');
+
+function showScreen(name) {
+  document.getElementById('screen-home').classList.toggle('hidden', name !== 'home');
+  document.getElementById('screen-chat').classList.toggle('hidden', name !== 'chat');
+}
+
+// ── MESSAGES ─────────────────────────────────────────────
+function addAIMessage(html) {
+  const msgs = document.getElementById('messages');
+  const row = document.createElement('div');
+  row.className = 'msg-row ai';
+  row.innerHTML = `<div class="av">🤖</div><div class="bubble">${html}</div>`;
+  msgs.appendChild(row);
+  scrollBottom();
+}
+
+function addUserMessage(text, wasSpoken = false) {
+  const msgs = document.getElementById('messages');
+  const row = document.createElement('div');
+  row.className = 'msg-row user';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+
+  if (wasSpoken) {
+    bubble.innerHTML = `<div class="transcript-label"><span class="dot"></span> 音声認識テキスト</div>${esc(text)}`;
+  } else {
+    bubble.textContent = text;
+  }
+
+  // Feedback toggle + panel
+  const toggle = document.createElement('button');
+  toggle.className = 'fb-toggle';
+  toggle.innerHTML = `<span class="arrow-icon">›</span> 発音・文法フィードバック`;
+  const panel = document.createElement('div');
+  panel.className = 'fb-panel';
+  panel.innerHTML = `<div class="fb-loading">分析中…</div>`;
+  toggle.onclick = () => {
+    toggle.classList.toggle('open');
+    panel.classList.toggle('open');
+  };
+  bubble.appendChild(toggle);
+  bubble.appendChild(panel);
+
+  row.appendChild(document.createElement('div')).className = 'av'; // spacer
+  row.lastChild.textContent = '🙋';
+  row.insertBefore(bubble, row.lastChild);
+  // re-order: bubble then av for user (row-reverse)
+  row.innerHTML = '';
+  const av = document.createElement('div');
+  av.className = 'av';
+  av.textContent = '🙋';
+  row.appendChild(av);
+  row.appendChild(bubble);
+
+  msgs.appendChild(row);
+  scrollBottom();
+  fetchFeedback(text, wasSpoken, panel);
+}
+
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  const row = document.createElement('div');
+  row.className = 'msg-row ai';
+  row.id = 'typing-row';
+  const av = document.createElement('div');
+  av.className = 'av';
+  av.textContent = '🤖';
+  const dots = document.createElement('div');
+  dots.className = 'typing-dots';
+  dots.innerHTML = '<span></span><span></span><span></span>';
+  row.appendChild(av);
+  row.appendChild(dots);
+  msgs.appendChild(row);
+  scrollBottom();
+}
+function removeTyping() {
+  const el = document.getElementById('typing-row');
+  if (el) el.remove();
+}
+function scrollBottom() {
+  const msgs = document.getElementById('messages');
+  setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 50);
+}
+
+// ── FEEDBACK ─────────────────────────────────────────────
+async function fetchFeedback(text, wasSpoken, panel) {
+  try {
+    const spokenNote = wasSpoken ? 'Note: this text was transcribed from speech.' : '';
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `You are an expert English coach for Japanese intermediate-level business English learners.
+Analyze the user's English message for pronunciation hints, grammar, vocabulary, and naturalness.
+${spokenNote}
+Return ONLY valid JSON (no markdown, no preamble, no backticks):
+{
+  "score": <1-5>,
+  "pronunciation": "<pronunciation tips in Japanese, or null if text input>",
+  "grammar": "<grammar feedback in Japanese, or '問題なし' if correct>",
+  "vocabulary": "<vocabulary/word choice feedback in Japanese>",
+  "natural": "<more natural alternative in English>",
+  "positive": "<one specific thing they did well in Japanese>"
+}`,
+        messages: [{ role: 'user', content: `Analyze: "${text}"` }]
+      })
+    });
+    const data = await res.json();
+    const raw = (data.content || []).map(c => c.text || '').join('');
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const fb = JSON.parse(clean);
+    const stars = '★'.repeat(fb.score) + '☆'.repeat(5 - fb.score);
+
+    let html = `<div class="fb-score"><span class="stars">${stars}</span><span class="label">総合スコア ${fb.score}/5</span></div>`;
+    html += `<div class="fb-section"><div class="fb-section-title">✅ 良かった点</div><div class="fb-good">${fb.positive}</div></div>`;
+    if (fb.pronunciation && wasSpoken) {
+      html += `<div class="fb-section"><div class="fb-section-title">🎤 発音のヒント</div><div class="fb-improve">${fb.pronunciation}</div></div>`;
+    }
+    if (fb.grammar && fb.grammar !== '問題なし') {
+      html += `<div class="fb-section"><div class="fb-section-title">📝 文法</div><div class="fb-improve">${fb.grammar}</div></div>`;
+    } else {
+      html += `<div class="fb-section"><div class="fb-section-title">📝 文法</div><div class="fb-good">問題なし ✓</div></div>`;
+    }
+    html += `<div class="fb-section"><div class="fb-section-title">💡 より自然な表現</div><div class="fb-alt">${fb.natural}</div></div>`;
+    panel.innerHTML = html;
+  } catch(e) {
+    panel.innerHTML = '<div style="color:var(--muted)">フィードバックを取得できませんでした</div>';
+  }
+}
+
+// ── SEND MESSAGE ──────────────────────────────────────────
+async function sendText(text, wasSpoken = false) {
+  if (isWaiting || !text.trim()) return;
+  isWaiting = true;
+  updateSendBtn();
+  document.getElementById('user-input').value = '';
+  document.getElementById('user-input').style.height = 'auto';
+
+  addUserMessage(text, wasSpoken);
+  history.push({ role: 'user', content: text });
+  showTyping();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: currentScenario.prompt + '\n\nKeep replies concise (2-3 sentences). Respond ONLY in English. Occasionally model excellent vocabulary or phrases naturally.',
+        messages: history
+      })
+    });
+    const data = await res.json();
+    const aiText = (data.content || []).map(c => c.text || '').join('') || 'Sorry, I could not respond.';
+    history.push({ role: 'assistant', content: aiText });
+    removeTyping();
+    addAIMessage(esc(aiText).replace(/\n/g, '<br>'));
+  } catch(e) {
+    removeTyping();
+    addAIMessage('⚠️ 接続エラーが発生しました。再試行してください。');
+  }
+  isWaiting = false;
+  updateSendBtn();
+}
+
+document.getElementById('send-btn').onclick = () => {
+  const val = document.getElementById('user-input').value.trim();
+  if (val) sendText(val, false);
+};
+
+document.getElementById('user-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('send-btn').click(); }
+});
+document.getElementById('user-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  updateSendBtn();
+});
+function updateSendBtn() {
+  const btn = document.getElementById('send-btn');
+  btn.disabled = isWaiting || !document.getElementById('user-input').value.trim();
+}
+
+// ── MICROPHONE / RECORDING ───────────────────────────────
+document.getElementById('mic-btn').onclick = startRecording;
+document.getElementById('rec-stop-btn').onclick = stopRecording;
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioChunks = [];
+    mediaRecorder = new MediaRecorder(stream, { mimeType: getSupportedMimeType() });
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.start(100);
+    document.getElementById('rec-overlay').classList.add('active');
+    document.getElementById('mic-btn').classList.add('recording');
+  } catch(err) {
+    alert('マイクへのアクセスが必要です。ブラウザの設定でマイクを許可してください。');
+  }
+}
+
+function getSupportedMimeType() {
+  const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+  return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
+}
+
+async function stopRecording() {
+  if (!mediaRecorder) return;
+  document.getElementById('rec-overlay').classList.remove('active');
+  document.getElementById('mic-btn').classList.remove('recording');
+
+  await new Promise(res => { mediaRecorder.onstop = res; mediaRecorder.stop(); });
+  mediaRecorder.stream.getTracks().forEach(t => t.stop());
+
+  const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+  transcribeAudio(blob);
+}
+
+async function transcribeAudio(blob) {
+  // Show processing state
+  const msgs = document.getElementById('messages');
+  const proc = document.createElement('div');
+  proc.className = 'processing-msg';
+  proc.id = 'proc-msg';
+  proc.textContent = '🎤 音声を解析中…';
+  msgs.appendChild(proc);
+  scrollBottom();
+
+  try {
+    // Convert to base64
+    const base64 = await blobToBase64(blob);
+    const mimeType = blob.type || 'audio/webm';
+
+    // Use Claude to transcribe (vision-style with audio as document)
+    // Since Claude doesn't do audio natively, we use Web Speech API as primary
+    // and fall back to asking user to retype if unsupported
+    const proc2 = document.getElementById('proc-msg');
+
+    // Try Web Speech API first (best for mobile)
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      if (proc2) proc2.remove();
+      // Web Speech API doesn't work from blob; we should have used it live
+      // Fallback: send audio to Claude as base64 for transcription
+      await transcribeWithClaude(base64, mimeType);
+    } else {
+      await transcribeWithClaude(base64, mimeType);
+    }
+  } catch(e) {
+    const p = document.getElementById('proc-msg');
+    if (p) p.remove();
+    addAIMessage('⚠️ 音声の処理中にエラーが発生しました。テキスト入力もご利用いただけます。');
+  }
+}
+
+async function transcribeWithClaude(base64Audio, mimeType) {
+  const proc = document.getElementById('proc-msg');
+  try {
+    // Use Claude to transcribe audio via base64 document
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: 'You are a speech transcription assistant. The user will send an audio recording. Transcribe the English speech EXACTLY as spoken. Return ONLY the transcribed text, nothing else. If you cannot transcribe it, return the string "UNCLEAR".',
+        messages: [{
+          role: 'user',
+          content: [{
+            type: 'document',
+            source: { type: 'base64', media_type: mimeType, data: base64Audio }
+          }, {
+            type: 'text',
+            text: 'Please transcribe this audio recording.'
+          }]
+        }]
+      })
+    });
+    const data = await res.json();
+    const transcript = (data.content || []).map(c => c.text || '').join('').trim();
+    if (proc) proc.remove();
+
+    if (!transcript || transcript === 'UNCLEAR' || data.error) {
+      // Fallback: use Web Speech API live approach note
+      showTranscriptFallback();
+    } else {
+      document.getElementById('user-input').value = transcript;
+      updateSendBtn();
+      // Auto-send
+      await sendText(transcript, true);
+    }
+  } catch(e) {
+    if (proc) proc.remove();
+    showTranscriptFallback();
+  }
+}
+
+function showTranscriptFallback() {
+  addAIMessage('音声の文字起こしができませんでした。テキスト欄に内容を入力してください。<br><small style="color:var(--muted)">※ブラウザによっては音声入力に制限があります</small>');
+}
+
+// Live speech recognition (for browsers that support it - better accuracy)
+let liveRecognition = null;
+
+function tryLiveSpeech() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return false;
+  liveRecognition = new SR();
+  liveRecognition.lang = 'en-US';
+  liveRecognition.continuous = false;
+  liveRecognition.interimResults = true;
+
+  let finalTranscript = '';
+  document.getElementById('rec-overlay').classList.add('active');
+
+  liveRecognition.onresult = e => {
+    finalTranscript = '';
+    for (let i = 0; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript;
+    }
+    document.getElementById('user-input').value = finalTranscript;
+    updateSendBtn();
+  };
+
+  liveRecognition.onend = () => {
+    document.getElementById('rec-overlay').classList.remove('active');
+    document.getElementById('mic-btn').classList.remove('recording');
+    if (finalTranscript.trim()) {
+      sendText(finalTranscript.trim(), true);
+    }
+  };
+
+  liveRecognition.onerror = () => {
+    document.getElementById('rec-overlay').classList.remove('active');
+    document.getElementById('mic-btn').classList.remove('recording');
+  };
+
+  liveRecognition.start();
+  document.getElementById('mic-btn').classList.add('recording');
+
+  // Override stop button
+  document.getElementById('rec-stop-btn').onclick = () => {
+    liveRecognition.stop();
+    document.getElementById('rec-stop-btn').onclick = stopRecording;
+  };
+  return true;
+}
+
+// Override mic button to prefer live speech
+document.getElementById('mic-btn').onclick = () => {
+  if (!tryLiveSpeech()) startRecording();
+};
+
+// ── UTILS ─────────────────────────────────────────────────
+function blobToBase64(blob) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(blob);
+  });
+}
+function esc(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── PWA SERVICE WORKER ─────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
